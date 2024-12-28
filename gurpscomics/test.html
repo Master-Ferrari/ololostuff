@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Flex Demo</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    /* Общий контейнер */
+    .container {
+      display: flex;
+      /* разрешаем перенос элементов при нехватке места */
+      flex-wrap: wrap;
+      /* высота на весь экран */
+      height: 100vh;
+      /* выравнивание по вертикали (горизонталь контролируется внутри .main) */
+      align-items: center;
+    }
+
+    /* Левая (основная) часть, где будет красный квадрат */
+    .main {
+      /* Занимает всё доступное пространство (кроме того, что уйдёт на .side) */
+      flex: 1;
+      /* Внутри .main мы центрируем дочерний элемент по горизонтали */
+      display: flex;
+      justify-content: center;
+    }
+
+    /* Красный квадрат */
+    .red-box {
+      width: 200px;
+      height: 200px;
+      background-color: red;
+    }
+
+    /* Правая часть для синего прямоугольника */
+    .side {
+      /* жёсткая или желаемая ширина - можно скорректировать при необходимости */
+      flex-basis: 300px;
+      /* если вы хотите, чтобы синий прямоугольник прижался к правому краю внутри .side */
+      display: flex;
+      justify-content: flex-end;
+      /* Можно добавить отступы, если нужно */
+      padding-right: 20px;
+    }
+
+    /* Синий прямоугольник */
+    .blue-box {
+      width: 100px;
+      height: 300px;
+      background-color: blue;
+    }
+
+    /* Для наглядности фоновый цвет под всем контейнером (необязательно) */
+    body {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Основная зона с красным квадратом по центру -->
+    <div class="main">
+      <div class="red-box"></div>
+    </div>
+    <!-- Блок справа для синего прямоугольника -->
+    <div class="side">
+      <div class="blue-box"></div>
+    </div>
+  </div>
+</body>
+</html>
