@@ -1,38 +1,33 @@
-name: GitHub Pages
+name: Remove PSD Files
 
 on:
   push:
     branches:
       - main
 
-permissions:
-  contents: write
-  pages: write
-  id-token: write
-
 jobs:
-  deploy:
+  remove-psd:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+        with:
+          fetch-depth: 0 # Необходимо для полной истории
 
       - name: Remove PSD files
-        run: find ./gurpscomics -name '*.psd' -delete
+        run: |
+          find . -name "*.psd" -print0 | xargs -0 git rm -f --
+          # Альтернатива с использованием find -exec:
+          # find . -name "*.psd" -exec git rm -f {} \;
 
-      - name: Upload Artifact
-        uses: actions/upload-pages-artifact@v2
-        with:
-          path: ./gurpscomics
-          name: github-pages
-          retention-days: 1
+      - name: Commit changes
+        run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
+          git commit -m "Remove PSD files"
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Push changes
+        uses: ad-m/github-push-action@master
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
