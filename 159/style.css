@@ -1,0 +1,79 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 20px;
+  background: #f0f0f0;
+}
+h1 { 
+  margin-bottom: 10px; 
+}
+#connection { 
+  margin-bottom: 20px; 
+}
+#connection input, 
+#connection button, 
+#connection select { 
+  padding: 5px 10px; 
+  font-size: 16px; 
+  margin: 0 5px; 
+}
+#status { 
+  margin-bottom: 10px; 
+  font-weight: bold; 
+}
+#playerWord { 
+  margin-bottom: 20px; 
+  font-size: 18px; 
+  font-weight: bold; 
+}
+#waitingInfo {
+  margin-top: 10px;
+  font-style: italic;
+}
+#board {
+  display: grid;
+  grid-template-columns: repeat(9, 50px);
+  grid-template-rows: repeat(5, 50px);
+  gap: 2px;
+  margin: 0 auto;
+  width: max-content;
+}
+.cell {
+  width: 50px;
+  height: 50px;
+  background: #fff;
+  border: 1px solid #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  user-select: none;
+}
+#letterSelection {
+  margin-top: 20px;
+}
+#letterSelection p {
+  margin: 0 0 10px;
+}
+#letterSelection button {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  margin: 0 5px;
+  cursor: pointer;
+}
+
+/* Легенда (нижний левый угол) */
+#legend {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #333;
+  padding: 10px;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.4;
+}
