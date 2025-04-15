@@ -1,45 +1,191 @@
-<html>
-  <body>
-    <style>
-      #outgoing {
-        width: 600px;
-        word-wrap: break-word;
-        white-space: normal;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Простой P2P чат на simple-peer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    button {
+      padding: 10px 15px;
+      margin: 5px;
+      font-size: 16px;
+    }
+    textarea {
+      width: 100%;
+      font-size: 14px;
+      margin: 5px 0;
+    }
+    #chat {
+      border: 1px solid #ccc;
+      padding: 10px;
+      height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    #messageInput {
+      width: 80%;
+      padding: 8px;
+    }
+    #sendMessage {
+      padding: 8px 12px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Простой P2P чат (Simple Peer)</h1>
+  <button id="createRoom">Создать комнату</button>
+  <button id="connectRoom">Подключиться к комнате</button>
+
+  <!-- Контейнер для отображения сигнала от инициатора -->
+  <div id="offerContainer" style="display: none;">
+    <h3>Скопируйте этот Offer и передайте собеседнику</h3>
+    <textarea id="offerOutput" rows="4" readonly></textarea>
+  </div>
+
+  <!-- Контейнер для вставки Answer от подключающегося -->
+  <div id="answerContainer" style="display: none;">
+    <h3>Вставьте Answer от собеседника и нажмите "Отправить Answer"</h3>
+    <textarea id="answerInput" rows="4"></textarea>
+    <button id="submitAnswer">Отправить Answer</button>
+  </div>
+
+  <!-- Контейнер для вставки сигнала для подключающегося (если требуется) -->
+  <div id="signalInputContainer" style="display: none;">
+    <h3>Вставьте сигнал (Offer) от инициатора и нажмите "Отправить Signal"</h3>
+    <textarea id="signalInput" rows="4"></textarea>
+    <button id="submitSignal">Отправить Signal</button>
+  </div>
+
+  <!-- Чат -->
+  <div id="chatContainer" style="display: none;">
+    <h3>Чат</h3>
+    <div id="chat"></div>
+    <input type="text" id="messageInput" placeholder="Введите сообщение..." />
+    <button id="sendMessage">Отправить</button>
+  </div>
+
+  <!-- Подключаем simple-peer из CDN -->
+  <script src="https://unpkg.com/simple-peer/simplepeer.min.js"></script>
+  <script>
+    let peer;
+    let isInitiator = false;
+
+    const createRoomButton = document.getElementById('createRoom');
+    const connectRoomButton = document.getElementById('connectRoom');
+
+    const offerContainer = document.getElementById('offerContainer');
+    const offerOutput = document.getElementById('offerOutput');
+
+    const answerContainer = document.getElementById('answerContainer');
+    const answerInput = document.getElementById('answerInput');
+    const submitAnswerButton = document.getElementById('submitAnswer');
+
+    const signalInputContainer = document.getElementById('signalInputContainer');
+    const signalInput = document.getElementById('signalInput');
+    const submitSignalButton = document.getElementById('submitSignal');
+
+    const chatContainer = document.getElementById('chatContainer');
+    const chat = document.getElementById('chat');
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageButton = document.getElementById('sendMessage');
+
+    // Инициатор: создание комнаты
+    createRoomButton.onclick = () => {
+      isInitiator = true;
+      peer = new SimplePeer({ initiator: true, trickle: false });
+      setupPeer();
+      createRoomButton.disabled = true;
+      connectRoomButton.disabled = true;
+    };
+
+    // Подключение к комнате: не инициатор
+    connectRoomButton.onclick = () => {
+      isInitiator = false;
+      peer = new SimplePeer({ initiator: false, trickle: false });
+      setupPeer();
+      createRoomButton.disabled = true;
+      connectRoomButton.disabled = true;
+      // Показываем поле для ввода сигнала от инициатора
+      signalInputContainer.style.display = 'block';
+    };
+
+    // Обработка кнопки отправки Answer (инициатор получает Answer от второго участника)
+    submitAnswerButton.onclick = () => {
+      try {
+        const answer = JSON.parse(answerInput.value);
+        peer.signal(answer);
+        answerContainer.style.display = 'none';
+      } catch(e) {
+        alert("Неверный формат Answer!");
       }
-    </style>
-    <form>
-      <textarea id="incoming"></textarea>
-      <button type="submit">submit</button>
-    </form>
-    <pre id="outgoing"></pre>
-    <script src="simplepeer.min.js"></script>
-    <script>
+    };
 
-      const p = new SimplePeer({
-        initiator: location.hash === '#1',
-        trickle: false
-      })
+    // Обработка кнопки отправки сигнала (подключающийся отправляет свой сигнал инициатору)
+    submitSignalButton.onclick = () => {
+      try {
+        const signal = JSON.parse(signalInput.value);
+        peer.signal(signal);
+        signalInputContainer.style.display = 'none';
+      } catch(e) {
+        alert("Неверный формат сигнала!");
+      }
+    };
 
-      p.on('error', err => console.log('error', err))
+    // Отправка сообщения в чат
+    sendMessageButton.onclick = () => {
+      const message = messageInput.value.trim();
+      if (message === "") return;
+      peer.send(message);
+      appendMessage("Я: " + message);
+      messageInput.value = "";
+    };
 
-      p.on('signal', data => {
-        console.log('SIGNAL', JSON.stringify(data))
-        document.querySelector('#outgoing').textContent = JSON.stringify(data)
-      })
+    // Функция для добавления сообщения в окно чата
+    function appendMessage(text) {
+      const p = document.createElement('p');
+      p.textContent = text;
+      chat.appendChild(p);
+      chat.scrollTop = chat.scrollHeight;
+    }
 
-      document.querySelector('form').addEventListener('submit', ev => {
-        ev.preventDefault()
-        p.signal(JSON.parse(document.querySelector('#incoming').value))
-      })
+    // Настройка событий p2p-соединения
+    function setupPeer() {
+      peer.on('signal', data => {
+        const str = JSON.stringify(data);
+        if (isInitiator) {
+          // Инициатор: выводим offer и ждём answer
+          offerContainer.style.display = 'block';
+          offerOutput.value = str;
+          alert("Скопируйте этот Offer и передайте его собеседнику:\n" + str);
+          // Также показываем поле для ввода Answer
+          answerContainer.style.display = 'block';
+        } else {
+          // Подключающийся: отправляем свой сигнал инициатору
+          alert("Отправьте этот сигнал инициатору:\n" + str);
+        }
+      });
 
-      p.on('connect', () => {
-        console.log('CONNECT')
-        p.send('whatever' + Math.random())
-      })
+      peer.on('connect', () => {
+        console.log("Соединение установлено");
+        chatContainer.style.display = 'block';
+      });
 
-      p.on('data', data => {
-        console.log('data: ' + data)
-      })
-    </script>
-  </body>
+      peer.on('data', data => {
+        appendMessage("Партнер: " + data);
+      });
+
+      peer.on('error', err => {
+        console.error("Ошибка: ", err);
+      });
+
+      peer.on('close', () => {
+        console.log("Соединение закрыто");
+        alert("Соединение закрыто");
+      });
+    }
+  </script>
+</body>
 </html>
