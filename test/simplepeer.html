@@ -32,6 +32,17 @@
     #sendMessage {
       padding: 8px 12px;
     }
+    #notification {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      padding: 10px 15px;
+      background-color: #4caf50;
+      color: white;
+      display: none;
+      border-radius: 5px;
+      z-index: 1000;
+    }
   </style>
 </head>
 <body>
@@ -52,7 +63,7 @@
     <button id="submitAnswer">Отправить Answer</button>
   </div>
 
-  <!-- Контейнер для вставки сигнала для подключающегося (если требуется) -->
+  <!-- Контейнер для вставки сигнала для подключающегося -->
   <div id="signalInputContainer" style="display: none;">
     <h3>Вставьте сигнал (Offer) от инициатора и нажмите "Отправить Signal"</h3>
     <textarea id="signalInput" rows="4"></textarea>
@@ -66,6 +77,9 @@
     <input type="text" id="messageInput" placeholder="Введите сообщение..." />
     <button id="sendMessage">Отправить</button>
   </div>
+
+  <!-- Уведомление -->
+  <div id="notification"></div>
 
   <!-- Подключаем simple-peer из CDN -->
   <script src="https://unpkg.com/simple-peer/simplepeer.min.js"></script>
@@ -91,6 +105,36 @@
     const chat = document.getElementById('chat');
     const messageInput = document.getElementById('messageInput');
     const sendMessageButton = document.getElementById('sendMessage');
+
+    // Функция копирования текста в буфер обмена и отображения уведомления
+    function copyToClipboard(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        // Используем Clipboard API
+        return navigator.clipboard.writeText(text);
+      } else {
+        // Создаём временное текстовое поле для старых браузеров
+        let textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";  // чтобы не прокручивалось
+        textArea.style.opacity = 0;
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        return new Promise((resolve, reject) => {
+           document.execCommand('copy') ? resolve() : reject();
+           textArea.remove();
+        });
+      }
+    }
+
+    function showNotification(message) {
+      const notif = document.getElementById("notification");
+      notif.textContent = message;
+      notif.style.display = "block";
+      setTimeout(() => {
+        notif.style.display = "none";
+      }, 3000);
+    }
 
     // Инициатор: создание комнаты
     createRoomButton.onclick = () => {
@@ -156,15 +200,22 @@
       peer.on('signal', data => {
         const str = JSON.stringify(data);
         if (isInitiator) {
-          // Инициатор: выводим offer и ждём answer
+          // Инициатор: копируем offer в буфер обмена и выводим уведомление
+          copyToClipboard(str).then(() => {
+            showNotification("Offer скопирован в буфер обмена");
+          }).catch(() => {
+            showNotification("Не удалось скопировать Offer");
+          });
           offerContainer.style.display = 'block';
           offerOutput.value = str;
-          alert("Скопируйте этот Offer и передайте его собеседнику:\n" + str);
-          // Также показываем поле для ввода Answer
           answerContainer.style.display = 'block';
         } else {
-          // Подключающийся: отправляем свой сигнал инициатору
-          alert("Отправьте этот сигнал инициатору:\n" + str);
+          // Подключающийся: копируем сигнал в буфер обмена и выводим уведомление
+          copyToClipboard(str).then(() => {
+            showNotification("Сигнал скопирован в буфер обмена");
+          }).catch(() => {
+            showNotification("Не удалось скопировать сигнал");
+          });
         }
       });
 
@@ -183,7 +234,7 @@
 
       peer.on('close', () => {
         console.log("Соединение закрыто");
-        alert("Соединение закрыто");
+        showNotification("Соединение закрыто");
       });
     }
   </script>
